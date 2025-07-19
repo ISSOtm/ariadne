@@ -17,7 +17,10 @@ pub trait Cache<Id: ?Sized> {
 
     /// Fetch the [`Source`] identified by the given ID, if possible.
     // TODO: Don't box
-    fn fetch(&mut self, id: &Id) -> Result<&Source<Self::Storage>, Box<dyn fmt::Debug + '_>>;
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        id: &'id Id,
+    ) -> Result<&'ret Source<Self::Storage>, Box<dyn fmt::Debug + 'cache>>;
 
     /// Display the given ID. as a single inline value.
     ///
@@ -29,7 +32,10 @@ pub trait Cache<Id: ?Sized> {
 impl<'b, C: Cache<Id>, Id: ?Sized> Cache<Id> for &'b mut C {
     type Storage = C::Storage;
 
-    fn fetch(&mut self, id: &Id) -> Result<&Source<Self::Storage>, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        id: &'id Id,
+    ) -> Result<&'ret Source<Self::Storage>, Box<dyn fmt::Debug + 'cache>> {
         C::fetch(self, id)
     }
     fn display<'a>(&self, id: &'a Id) -> Option<Box<dyn fmt::Display + 'a>> {
@@ -40,7 +46,10 @@ impl<'b, C: Cache<Id>, Id: ?Sized> Cache<Id> for &'b mut C {
 impl<C: Cache<Id>, Id: ?Sized> Cache<Id> for Box<C> {
     type Storage = C::Storage;
 
-    fn fetch(&mut self, id: &Id) -> Result<&Source<Self::Storage>, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        id: &'id Id,
+    ) -> Result<&'ret Source<Self::Storage>, Box<dyn fmt::Debug + 'cache>> {
         C::fetch(self, id)
     }
     fn display<'a>(&self, id: &'a Id) -> Option<Box<dyn fmt::Display + 'a>> {
@@ -288,7 +297,10 @@ pub struct Location {
 impl<I: AsRef<str>> Cache<()> for Source<I> {
     type Storage = I;
 
-    fn fetch(&mut self, _: &()) -> Result<&Source<I>, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        _: &'id (),
+    ) -> Result<&'ret Source<I>, Box<dyn fmt::Debug + 'cache>> {
         Ok(self)
     }
     fn display(&self, _: &()) -> Option<Box<dyn fmt::Display>> {
@@ -299,7 +311,10 @@ impl<I: AsRef<str>> Cache<()> for Source<I> {
 impl<I: AsRef<str>> Cache<()> for &'_ Source<I> {
     type Storage = I;
 
-    fn fetch(&mut self, _: &()) -> Result<&Source<I>, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        _: &'id (),
+    ) -> Result<&'ret Source<I>, Box<dyn fmt::Debug + 'cache>> {
         Ok(*self)
     }
     fn display(&self, _: &()) -> Option<Box<dyn fmt::Display>> {
@@ -310,7 +325,10 @@ impl<I: AsRef<str>> Cache<()> for &'_ Source<I> {
 impl<I: AsRef<str>, Id: fmt::Display + Eq> Cache<Id> for (Id, Source<I>) {
     type Storage = I;
 
-    fn fetch(&mut self, id: &Id) -> Result<&Source<I>, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        id: &'id Id,
+    ) -> Result<&'ret Source<I>, Box<dyn fmt::Debug + 'cache>> {
         if id == &self.0 {
             Ok(&self.1)
         } else {
@@ -325,7 +343,10 @@ impl<I: AsRef<str>, Id: fmt::Display + Eq> Cache<Id> for (Id, Source<I>) {
 impl<I: AsRef<str>, Id: fmt::Display + Eq> Cache<Id> for (Id, &'_ Source<I>) {
     type Storage = I;
 
-    fn fetch(&mut self, id: &Id) -> Result<&Source<I>, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        id: &'id Id,
+    ) -> Result<&'ret Source<I>, Box<dyn fmt::Debug + 'cache>> {
         if id == &self.0 {
             Ok(self.1)
         } else {
@@ -346,7 +367,10 @@ pub struct FileCache {
 impl Cache<Path> for FileCache {
     type Storage = String;
 
-    fn fetch(&mut self, path: &Path) -> Result<&Source, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        path: &'id Path,
+    ) -> Result<&'ret Source, Box<dyn fmt::Debug + 'cache>> {
         Ok(match self.files.entry(path.to_path_buf()) {
             // TODO: Don't allocate here
             Entry::Occupied(entry) => entry.into_mut(),
@@ -402,7 +426,10 @@ where
 {
     type Storage = I;
 
-    fn fetch(&mut self, id: &Id) -> Result<&Source<I>, Box<dyn fmt::Debug + '_>> {
+    fn fetch<'ret, 'cache: 'ret, 'id: 'ret>(
+        &'cache mut self,
+        id: &'id Id,
+    ) -> Result<&'ret Source<I>, Box<dyn fmt::Debug + 'cache>> {
         Ok(match self.sources.entry(id.clone()) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => entry.insert(Source::from((self.get)(id)?)),

@@ -857,10 +857,10 @@ impl LineLabel<'_> {
     }
 }
 
-fn fetch_source<'a, Id: ?Sized, C: Cache<Id>>(
-    cache: &'a mut C,
-    src_id: &Id,
-) -> Option<(&'a Source<C::Storage>, String)> {
+fn fetch_source<'ret, 'cache: 'ret, 'id: 'ret, Id: ?Sized, C: Cache<Id>>(
+    cache: &'cache mut C,
+    src_id: &'id Id,
+) -> Option<(&'ret Source<C::Storage>, String)> {
     let src_name = display_name(cache, src_id);
     match cache.fetch(src_id) {
         Ok(src) => Some((src, src_name)),
@@ -1134,9 +1134,9 @@ mod tests {
            ╭─[ <unknown>:1:12 ]
            │
          1 │ äpplë == örängë;
-           │ ──┬──    ───┬──  
+           │ ──┬──    ───┬──
            │   ╰─────────┼──── This is an äpplë
-           │             │    
+           │             │
            │             ╰──── This is an örängë
         ───╯
         ");
@@ -1349,21 +1349,21 @@ mod tests {
         // TODO: it would be nice if the 2nd line wasn't omitted
         // TODO: it would be nice if the lines didn't cross, or at least less so
         assert_snapshot!(msg, @r"
-        Error: 
+        Error:
            ╭─[ <unknown>:1:1 ]
            │
          1 │ ╭─────▶ apple
-           │ │       ▲       
-           │ │ ╭─────╯       
-           │ │ │     │       
-           │ │ │ ╭───╯       
-           ┆ ┆ ┆ ┆   
+           │ │       ▲
+           │ │ ╭─────╯
+           │ │ │     │
+           │ │ │ ╭───╯
+           ┆ ┆ ┆ ┆
          3 │ ├─│ │ ▶ orange
-           │ │ │ │        ▲  
+           │ │ │ │        ▲
            │ ╰─────────────── illegal comparison
-           │   │ │        │  
+           │   │ │        │
            │   ╰──────────┴── do not do this
-           │     │        │  
+           │     │        │
            │     ╰────────┴── please reconsider
         ───╯
         ");
