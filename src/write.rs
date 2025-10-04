@@ -229,15 +229,16 @@ impl<S: Span> Report<'_, S> {
             let line_range = src.get_line_range(&group.char_span);
 
             // File name & reference
-            let location = if group.src_id == self.span.source() {
-                self.span.start()
+            let (location, index_type) = if group.src_id == self.span.source() {
+                (self.span.start(), self.config.index_type)
             } else {
-                group.labels[0].char_span.start
+                // If applicable, this has already been converted.
+                (group.labels[0].char_span.start, IndexType::Char)
             };
             let location = Loc(
                 src,
                 src_name,
-                match self.config.index_type {
+                match index_type {
                     IndexType::Char => src.get_offset_line(location),
                     IndexType::Byte => src.get_byte_line(location).map(|location| {
                         let line_text = src.get_line_text(location.line).unwrap();
