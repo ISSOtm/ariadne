@@ -406,8 +406,9 @@ where
     }
 }
 
-impl<Id: fmt::Display + Hash + PartialEq + Eq + Clone, F, I, E> Cache<Id> for FnCache<Id, F, I>
+impl<Id, F, I, E> Cache<Id> for FnCache<Id, F, I>
 where
+    Id: fmt::Display + Hash + PartialEq + Eq + Clone,
     I: AsRef<str>,
     E: fmt::Debug,
     F: for<'a> FnMut(&'a Id) -> Result<I, E>,
