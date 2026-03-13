@@ -210,7 +210,7 @@ impl<S: Span, K: ReportStyle> Report<S, K> {
         let groups = self.get_source_groups(&mut cache);
 
         // Line number maximum width
-        let line_num_width = max_line_num(&groups).map_or(0, nb_digits);
+        let line_num_width = max_line_num(&groups).unwrap_or_default();
 
         let margin_char = |c: char| c.fg(self.config.margin_color(), s);
 
@@ -315,7 +315,7 @@ impl<S: Span, K: ReportStyle> Report<S, K> {
                 .filter(|label_info| matches!(label_info.kind, LabelKind::Multiline))
                 .collect();
             // Sort them by length; this also ensures that the next array is sorted.
-            multi_labels.sort_unstable_by_key(|label_info| !Span::len(&label_info.char_span));
+            multi_labels.sort_by_key(|label_info| !Span::len(&label_info.char_span));
 
             let mut multi_labels_with_message: Vec<_> = multi_labels
                 .iter()
